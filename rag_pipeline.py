@@ -6,10 +6,10 @@ from langchain_community.document_loaders import PyPDFLoader, TextLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
 from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
-from langchain.chains.retrieval import create_retrieval_chain
-from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.documents import Document
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnableLambda, RunnableParallel
 
 def process_uploaded_file(uploaded_file) -> List[Document]:
     """
@@ -63,7 +63,7 @@ def setup_vector_store(chunks: List[Document], api_key: str) -> Chroma:
     """
     # Use Google's embedding model for high-quality embeddings
     embeddings = GoogleGenerativeAIEmbeddings(
-        model="models/gemini-embedding-2",
+        model="models/gemini-embedding-001",
         google_api_key=api_key
     )
     
@@ -103,7 +103,28 @@ def create_rag_chain(vector_store: Chroma, api_key: str):
         ("human", "{input}"),
     ])
     
-    question_answer_chain = create_stuff_documents_chain(llm, prompt)
-    rag_chain = create_retrieval_chain(retriever, question_answer_chain)
-    
+    def format_docs(docs: List[Document]) -> str:
+        return "\n\n".join(doc.page_content for doc in docs)
+
+    def pick_input(data: dict) -> str:
+        return data["input"]
+
+    # Keep context documents for citations while formatting context for the prompt.
+    base = RunnableParallel(
+        context=RunnableLambda(pick_input) | retriever,
+        input=RunnableLambda(pick_input),
+    )
+
+    rag_chain = base.assign(
+        answer=(
+            {
+                "context": RunnableLambda(lambda x: format_docs(x["context"])),
+                "input": RunnableLambda(lambda x: x["input"]),
+            }
+            | prompt
+            | llm
+            | StrOutputParser()
+        )
+    )
+
     return rag_chain

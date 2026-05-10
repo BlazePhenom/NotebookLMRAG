@@ -32,14 +32,25 @@ Ensure you have Python 3.9+ installed, then run:
 pip install -r requirements.txt
 ```
 
-### 3. Get your Google API Key
-Get a free API key from [Google AI Studio](https://aistudio.google.com/).
+### 3. Set your Google API Key
+Get a free API key from [Google AI Studio](https://aistudio.google.com/), then set it as an environment variable named `GOOGLE_API_KEY`.
+
+PowerShell (Windows):
+```bash
+$env:GOOGLE_API_KEY="your_api_key_here"
+```
+
+Streamlit Secrets (optional):
+Create `.streamlit/secrets.toml` with:
+```toml
+GOOGLE_API_KEY = "your_api_key_here"
+```
 
 ### 4. Run the Application
 ```bash
 streamlit run app.py
 ```
-This will open the application in your web browser. Enter your API key in the sidebar, upload a document, and start chatting!
+This will open the application in your web browser. Upload a document and start chatting!
 
 ## Chunking Strategy Documented
 This application implements **Recursive Character Text Splitting**. 

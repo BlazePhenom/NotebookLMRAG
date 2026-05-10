@@ -59,10 +59,9 @@ with st.sidebar:
     
     st.divider()
     
-    # API Key Input
-    st.caption("⚙️ Configuration")
-    api_key = st.text_input("Google Gemini API Key", type="password", value="AIzaSyA40WvM9gc8DEehZc1x22zt5L1xBryuXcU", help="Get this from Google AI Studio")
-    
+    # API Key (read from environment or Streamlit secrets)
+    api_key = os.getenv("GOOGLE_API_KEY") or st.secrets.get("GOOGLE_API_KEY", "")
+
     st.divider()
     
     # File Upload
@@ -73,7 +72,7 @@ with st.sidebar:
     
     if process_btn:
         if not api_key:
-            st.error("Please enter your Google Gemini API Key.")
+            st.error("Missing GOOGLE_API_KEY. Set it in your environment or Streamlit secrets.")
         elif not uploaded_file:
             st.error("Please upload a document.")
         else:
